@@ -25,14 +25,15 @@ class Frame:
         while True:
             success, frame = cap.read()  # read the camera frame
             if not success:
-                continue
+                cap = VideoCapture(0)
+                sleep(1)
             else:
                 img = cvtColor(frame, COLOR_BGR2RGB)
-                self.frame_bytes = self.resize_img_2_bytes(img, resize_factor=0.8, quality=30)
+                self.frame_bytes = self.resize_img_2_bytes(img, resize_factor=2, quality=300)
 
     def get_frame(self):
         while True:
-            sleep(1/60)
+            sleep(1/120)
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + self.frame_bytes + b'\r\n')
 
@@ -53,6 +54,7 @@ def get_stream_html():
 		<script src="https://cdn.tailwindcss.com"></script>
 	</head>
 	<body>
+        <center>
 		<div class="container">
 			<div class="row">
 				<div class="grid-cols-8">
@@ -61,6 +63,7 @@ def get_stream_html():
 				</div>
 			</div>
 		</div>
+        </center>
 	</body>
 </html>''')
 

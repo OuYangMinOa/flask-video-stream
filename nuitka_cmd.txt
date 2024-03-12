@@ -1,0 +1,1 @@
+nuitka --standalone --mingw64 --output-di=out --onefile --show-progress --windows-product-name="Ouyang" --plugin-enable=tk-inter main.py
