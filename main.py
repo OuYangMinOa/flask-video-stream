@@ -10,6 +10,24 @@ import threading
 class Frame:
     def __init__(self):
         self.frame_bytes = None
+        self.state = False
+        self.open_camera()
+        self.grabbing = True
+        threading.Thread(target=self.close_countdown,daemon=True).start()
+
+
+    def close_countdown(self):
+        while True:
+            self.grabbing = False
+            sleep(20)
+            if (self.grabbing == False):
+                self.state = False
+                
+
+            sleep(60)
+
+    def open_camera(self):
+        self.state = True
         threading.Thread(target=self.gen_frames,daemon=True).start()
 
     def resize_img_2_bytes(self,image, resize_factor, quality):
@@ -22,17 +40,22 @@ class Frame:
 
     def gen_frames(self):
         cap = VideoCapture(0)
-        while True:
+        while self.state:
             success, frame = cap.read()  # read the camera frame
             if not success:
                 cap = VideoCapture(0)
                 sleep(1)
-            else:
+            else:   
                 img = cvtColor(frame, COLOR_BGR2RGB)
                 self.frame_bytes = self.resize_img_2_bytes(img, resize_factor=2, quality=300)
-
+        print("[*] Camera close")
+        
     def get_frame(self):
+        if (not self.state):
+            self.open_camera()
+
         while True:
+            self.grabbing = True
             sleep(1/120)
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + self.frame_bytes + b'\r\n')
