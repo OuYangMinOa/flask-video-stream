@@ -1,29 +1,75 @@
-from cv2    import VideoCapture, imencode, COLOR_BGR2RGB, cvtColor
-from flask  import Flask, render_template_string, Response
-from io     import BytesIO
-from dotter import dotter
-from PIL    import Image
-from time   import sleep
+from cv2      import VideoCapture, imencode, COLOR_BGR2RGB, cvtColor
+from flask    import Flask, render_template_string, Response
+from io       import BytesIO
+from dotter   import dotter
+from PIL      import Image
+from time     import sleep
+from datetime import datetime
+
 import threading
+import cv2
+import os
 
 
 class Frame:
     def __init__(self):
+        self.save_folder = "GoClass"
         self.frame_bytes = None
+        self.frame_cap = None
         self.state = False
         self.open_camera()
         self.grabbing = True
+    
+    def start_test(self):  
         threading.Thread(target=self.close_countdown,daemon=True).start()
 
+    def start_record(self,filename, total_time = 1.5 * 3600):
+        threading.Thread(target=self.record_frame, args = (filename, total_time), daemon=True).start()
+
+    def record_frame(self, filename, total_time = 1.5 * 3600):
+        if (not self.state):
+            self.open_camera()
+        start_time = datetime.now()
+        fps = 20.0
+        fourcc = cv2.VideoWriter_fourcc(*"MJPG")
+        out = cv2.VideoWriter(filename, fourcc, fps, (
+             int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
+             int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)),
+            ))
+
+        print("start recording ... ")
+        while (datetime.now() - start_time).seconds < total_time:
+            self.grabbing = True
+            if (self.frame_cap is not None):
+                out.write(self.frame_cap)
+                sleep(1/fps)
+        print((datetime.now() - start_time).seconds , total_time,(datetime.now() - start_time).seconds > total_time)
+
+        print("record stop")
+        out.release()
+    
+    def book_record_each_week(self, date, hour, minute, total_time=1.5*3600):
+        def while_start():
+            print(f"[*] Book at {date=} {hour=} {minute=}")
+            os.makedirs(self.save_folder, exist_ok=True)
+            filename = f"{self.save_folder}/{date}-{hour}-{minute}" + ".avi"
+            if (os.path.exists(filename)):
+                os.remove(filename)
+            while True:
+                now = datetime.now()
+                this_now = (now.weekday()+1, now.hour, now.minute)
+                if (this_now == (date, hour, minute)):
+                    self.start_record(filename,total_time)
+                sleep(60)
+
+        threading.Thread(target=while_start, daemon=True).start()
 
     def close_countdown(self):
         while True:
             self.grabbing = False
             sleep(20)
             if (self.grabbing == False):
-                self.state = False
-                
-
+                self.state = False                
             sleep(60)
 
     def open_camera(self):
@@ -39,15 +85,21 @@ class Frame:
         return bytes_io.getvalue()
 
     def gen_frames(self):
-        cap = VideoCapture(0)
+        print("[*] Open camera ")
+        self.cap = VideoCapture(0)
         while self.state:
-            success, frame = cap.read()  # read the camera frame
+            success, frame = self.cap.read()  # read the camera frame
+            self.frame_cap = frame
             if not success:
-                cap = VideoCapture(0)
+                self.cap = VideoCapture(0)
                 sleep(1)
             else:   
                 img = cvtColor(frame, COLOR_BGR2RGB)
+                timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                img = cv2.putText(img, timestamp, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 
+                1, (255, 255, 255), 2, cv2.LINE_AA)
                 self.frame_bytes = self.resize_img_2_bytes(img, resize_factor=2, quality=300)
+
         print("[*] Camera close")
         
     def get_frame(self):
@@ -63,11 +115,14 @@ class Frame:
 app = Flask(__name__)
 frame = Frame()
 
-
 with dotter("[*] Waiting for frame"):
     while frame.frame_bytes is None:
         sleep(1)
+frame.book_record_each_week(1,13,30)
+frame.book_record_each_week(2,17, 0)
+frame.book_record_each_week(7,14, 0)
 
+frame.start_test()
 
 @app.route("/", methods=['GET'])
 def get_stream_html():
