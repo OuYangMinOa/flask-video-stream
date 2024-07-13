@@ -120,7 +120,7 @@ with dotter("[*] Waiting for frame"):
         sleep(1)
 frame.book_record_each_week(1,13,30)
 frame.book_record_each_week(2,17, 0)
-frame.book_record_each_week(7,14, 0)
+frame.book_record_each_week(6,14, 0)
 
 frame.start_test()
 
