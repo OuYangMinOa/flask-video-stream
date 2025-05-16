@@ -86,12 +86,12 @@ class Frame:
 
     def gen_frames(self):
         print("[*] Open camera ")
-        self.cap = VideoCapture(0)
+        self.cap = VideoCapture(-1)
         while self.state:
             success, frame = self.cap.read()  # read the camera frame
             self.frame_cap = frame
             if not success:
-                self.cap = VideoCapture(0)
+                self.cap = VideoCapture(-1)
                 sleep(1)
             else:   
                 img = cvtColor(frame, COLOR_BGR2RGB)
