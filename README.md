@@ -1,4 +1,4 @@
-This projec using uv
+# This projec using uv
 
 ```
 pip install uv
@@ -6,7 +6,7 @@ uv sync
 ```
 
 
-# Sending video with `jpef`
+# Sending video with `jpeg`
 
 ### A simple and easy method, but the live broadcast effect is not good
 
