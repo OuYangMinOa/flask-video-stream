@@ -30,7 +30,7 @@ class Frame:
         if (not self.state):
             self.open_camera()
         start_time = datetime.now()
-        fps = 20.0
+        fps = 30.0
         fourcc = cv2.VideoWriter_fourcc(*"MJPG")
         out = cv2.VideoWriter(filename, fourcc, fps, (
              int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
@@ -98,7 +98,7 @@ class Frame:
                 timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 img = cv2.putText(img, timestamp, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 
                 1, (255, 255, 255), 2, cv2.LINE_AA)
-                self.frame_bytes = self.resize_img_2_bytes(img, resize_factor=2, quality=300)
+                self.frame_bytes = self.resize_img_2_bytes(img, resize_factor=1, quality=600)
 
         print("[*] Camera close")
         
@@ -108,7 +108,7 @@ class Frame:
 
         while True:
             self.grabbing = True
-            sleep(1/120)
+            sleep(1/30)
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + self.frame_bytes + b'\r\n')
 
