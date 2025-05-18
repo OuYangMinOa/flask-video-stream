@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Live Stream</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen">
+  <div class="w-full max-w-3xl p-4">
+    <h1 class="text-3xl font-bold mb-4 text-center">🎥 即時攝影機直播</h1>
+    <video id="video" autoplay playsinline class="rounded-xl shadow-xl w-full border-2 border-white"></video>
+  </div>
+
+  <script>
+	  async function start() {
+		  const pc = new RTCPeerConnection();
+
+		  // 明確要求 video track（recvonly）
+		  pc.addTransceiver('video', { direction: 'recvonly' });
+
+		  pc.ontrack = function (event) {
+			document.getElementById("video").srcObject = event.streams[0];
+		  };
+
+		  const offer = await pc.createOffer();
+		  await pc.setLocalDescription(offer);
+
+		  const res = await fetch("/offer", {
+			method: "POST",
+			body: JSON.stringify(pc.localDescription),
+			headers: { "Content-Type": "application/json" }
+		  });
+
+		  const answer = await res.json();
+		  await pc.setRemoteDescription(answer);
+		}
+
+    start();
+  </script>
+</body>
+</html>
+
