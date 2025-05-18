@@ -1,4 +1,4 @@
-# This projec using uv
+# This project using uv
 
 ```
 pip install uv
